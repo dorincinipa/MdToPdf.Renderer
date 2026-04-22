@@ -1,0 +1,7 @@
+MdToPdf.Renderer
+Copyright (c) 2026 MdToPdf.Renderer Contributors
+
+This product uses PDFsharp (https://github.com/empira/PDFsharp), which is
+licensed under the MIT License. PDFsharp is Copyright (c) 2005-2025 empira
+Software GmbH, Troisdorf (Cologne area), Germany. All PDF rendering and
+document composition provided by this library is performed via PDFsharp.
