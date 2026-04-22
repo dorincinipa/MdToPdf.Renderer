@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/MdToPdf.Renderer/MdToPdf.Renderer.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MdToPdf.Renderer.Tests/MdToPdf.Renderer.Tests.csproj" />
+  </Folder>
 </Solution>
