@@ -1,0 +1,26 @@
+name: Publish to NuGet
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - run: dotnet restore MdToPdf.Renderer.slnx -p:EnableWindowsTargeting=true
+
+      - run: dotnet build MdToPdf.Renderer.slnx -c Release --no-restore -p:EnableWindowsTargeting=true
+
+      - run: dotnet pack src/MdToPdf.Renderer/MdToPdf.Renderer.csproj -c Release --no-build -o ./nupkg /p:Version=${{ github.event.release.tag_name }}
+
+      - run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
