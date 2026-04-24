@@ -5,4 +5,9 @@
   <Folder Name="/tests/">
     <Project Path="tests/MdToPdf.Renderer.Tests/MdToPdf.Renderer.Tests.csproj" />
   </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/MdToPdf.Demo/MdToPdf.Demo.csproj" />
+    <Project Path="samples/MdToPdf.WpfDemo/MdToPdf.WpfDemo.csproj" />
+    <Project Path="samples/MdToPdf.Api/MdToPdf.Api.csproj" />
+  </Folder>
 </Solution>
