@@ -1,0 +1,181 @@
+using PdfSharp.Pdf;
+using PdfSharp.Pdf.IO;
+
+namespace MdToPdf.Renderer.Tests;
+
+public class PdfSecurityTests
+{
+    [Fact]
+    public void GeneratePdf_SecurityWithoutAnyPassword_Throws()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions
+            {
+                Permissions = PdfPermissions.ReadOnly
+            }
+        };
+
+        var ex = Assert.Throws<InvalidOperationException>(
+            () => PdfGenerator.GeneratePdf("# Hello", options));
+
+        Assert.Contains("UserPassword", ex.Message);
+        Assert.Contains("OwnerPassword", ex.Message);
+    }
+
+    [Fact]
+    public void GeneratePdf_NullSecurity_ProducesUnencryptedDocument()
+    {
+        var options = new PdfOptions { Security = null };
+
+        using var doc = PdfGenerator.GeneratePdf("plain", options);
+
+        Assert.False(doc.SecuritySettings.IsEncrypted);
+    }
+
+    [Fact]
+    public void GeneratePdf_UserPasswordOnly_EncryptsAndGatesReopen()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions { UserPassword = "secret" }
+        };
+
+        using var doc = PdfGenerator.GeneratePdf("# Locked", options);
+        using var stream = new MemoryStream();
+        doc.Save(stream, false);
+
+        stream.Position = 0;
+        using (var reopened = PdfReader.Open(stream, "secret", PdfDocumentOpenMode.Modify))
+        {
+            Assert.True(reopened.PageCount >= 1);
+        }
+
+        stream.Position = 0;
+        Assert.ThrowsAny<Exception>(() =>
+            PdfReader.Open(stream, PdfDocumentOpenMode.Modify));
+    }
+
+    [Fact]
+    public void GeneratePdf_OwnerPasswordOnly_EncryptsDocument()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions { OwnerPassword = "owner" }
+        };
+
+        using var doc = PdfGenerator.GeneratePdf("# Owner protected", options);
+
+        Assert.True(doc.SecuritySettings.IsEncrypted);
+
+        using var stream = new MemoryStream();
+        doc.Save(stream, false);
+
+        stream.Position = 0;
+        using var reopened = PdfReader.Open(stream, "owner", PdfDocumentOpenMode.Modify);
+        Assert.True(reopened.PageCount >= 1);
+    }
+
+    [Fact]
+    public void GeneratePdf_BothPasswords_UserOpensOwnerOpens()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions
+            {
+                UserPassword = "user",
+                OwnerPassword = "owner"
+            }
+        };
+
+        using var doc = PdfGenerator.GeneratePdf("# Both passwords", options);
+        using var stream = new MemoryStream();
+        doc.Save(stream, false);
+
+        // User password grants read-only (Import) access; Modify requires owner.
+        stream.Position = 0;
+        using (var r1 = PdfReader.Open(stream, "user", PdfDocumentOpenMode.Import))
+            Assert.True(r1.PageCount >= 1);
+
+        stream.Position = 0;
+        using (var r2 = PdfReader.Open(stream, "owner", PdfDocumentOpenMode.Modify))
+            Assert.True(r2.PageCount >= 1);
+
+        stream.Position = 0;
+        Assert.ThrowsAny<Exception>(() =>
+            PdfReader.Open(stream, "wrong", PdfDocumentOpenMode.Modify));
+    }
+
+    [Fact]
+    public void GeneratePdf_PermissionsReadOnly_MapsToExpectedPermitBools()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions
+            {
+                OwnerPassword = "owner",
+                Permissions = PdfPermissions.ReadOnly
+            }
+        };
+
+        using var doc = PdfGenerator.GeneratePdf("# ReadOnly", options);
+        var s = doc.SecuritySettings;
+
+        Assert.True(s.PermitPrint);
+        Assert.True(s.PermitFullQualityPrint);
+        Assert.True(s.PermitExtractContent);
+
+        Assert.False(s.PermitModifyDocument);
+        Assert.False(s.PermitAnnotations);
+        Assert.False(s.PermitFormsFill);
+        Assert.False(s.PermitAssembleDocument);
+    }
+
+    [Fact]
+    public void GeneratePdf_PermissionsAll_EveryPermitTrue()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions
+            {
+                OwnerPassword = "owner",
+                Permissions = PdfPermissions.All
+            }
+        };
+
+        using var doc = PdfGenerator.GeneratePdf("# All permissions", options);
+        var s = doc.SecuritySettings;
+
+        Assert.True(s.PermitPrint);
+        Assert.True(s.PermitFullQualityPrint);
+        Assert.True(s.PermitModifyDocument);
+        Assert.True(s.PermitExtractContent);
+        Assert.True(s.PermitAnnotations);
+        Assert.True(s.PermitFormsFill);
+        Assert.True(s.PermitAssembleDocument);
+    }
+
+    [Fact]
+    public void GeneratePdf_PermissionsNone_EveryPermitFalse()
+    {
+        var options = new PdfOptions
+        {
+            Security = new PdfSecurityOptions
+            {
+                OwnerPassword = "owner",
+                Permissions = PdfPermissions.None
+            }
+        };
+
+        using var doc = PdfGenerator.GeneratePdf("# No permissions", options);
+        var s = doc.SecuritySettings;
+
+        Assert.False(s.PermitPrint);
+        Assert.False(s.PermitFullQualityPrint);
+        Assert.False(s.PermitModifyDocument);
+        Assert.False(s.PermitExtractContent);
+        Assert.False(s.PermitAnnotations);
+        Assert.False(s.PermitFormsFill);
+        Assert.False(s.PermitAssembleDocument);
+    }
+}
