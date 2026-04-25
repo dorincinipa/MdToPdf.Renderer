@@ -31,6 +31,7 @@ public class PdfOptions
     public string MonospaceFontFamily { get; set; } = "Courier New";
     public double LineHeight { get; set; } = 1.4;
     public ImageLoadFailureMode ImageLoadFailureMode { get; set; } = ImageLoadFailureMode.RenderAltText;
+    public PdfSecurityOptions? Security { get; set; }
 
     public void SetMargins(double all)
     {
