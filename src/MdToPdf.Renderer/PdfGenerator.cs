@@ -4,6 +4,7 @@ using MdToPdf.Renderer.Parsing;
 using MdToPdf.Renderer.Rendering;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
+using PdfSharp.Pdf.Security;
 
 namespace MdToPdf.Renderer;
 
@@ -31,6 +32,7 @@ public static class PdfGenerator
     {
         ArgumentNullException.ThrowIfNull(options);
         var document = new PdfDocument();
+        ApplySecurity(document, options.Security);
         AddPdfPages(document, markdown, options);
         return document;
     }
@@ -61,6 +63,31 @@ public static class PdfGenerator
         ProbeImages(ast, imageLoader);
         var paint = new PaintEngine(options, imageLoader);
         paint.Paint(document, layout);
+    }
+
+    private static void ApplySecurity(PdfDocument document, PdfSecurityOptions? security)
+    {
+        if (security is null) return;
+
+        if (string.IsNullOrEmpty(security.UserPassword) &&
+            string.IsNullOrEmpty(security.OwnerPassword))
+        {
+            throw new InvalidOperationException(
+                "PdfSecurityOptions requires at least UserPassword or OwnerPassword.");
+        }
+
+        var s = document.SecuritySettings;
+        if (!string.IsNullOrEmpty(security.UserPassword))  s.UserPassword  = security.UserPassword;
+        if (!string.IsNullOrEmpty(security.OwnerPassword)) s.OwnerPassword = security.OwnerPassword;
+
+        var p = security.Permissions;
+        s.PermitPrint            = p.HasFlag(PdfPermissions.Print);
+        s.PermitFullQualityPrint = p.HasFlag(PdfPermissions.HighQualityPrint);
+        s.PermitModifyDocument   = p.HasFlag(PdfPermissions.ModifyContent);
+        s.PermitExtractContent   = p.HasFlag(PdfPermissions.CopyContent);
+        s.PermitAnnotations      = p.HasFlag(PdfPermissions.Annotate);
+        s.PermitFormsFill        = p.HasFlag(PdfPermissions.FillForms);
+        s.PermitAssembleDocument = p.HasFlag(PdfPermissions.AssembleDocument);
     }
 
     private static void ProbeImages(List<Parsing.Ast.MarkdownBlock> blocks, ImageLoader loader)
