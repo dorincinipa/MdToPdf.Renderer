@@ -79,6 +79,19 @@ public sealed class PdfBuilder
         return this;
     }
 
+    public PdfBuilder WithProgress(Action<int> onProgress)
+    {
+        _options.OnProgress = onProgress;
+        return this;
+    }
+
+    public PdfBuilder OnRenderError(Action<Exception> handler, bool continueOnError = false)
+    {
+        _options.OnRenderError = handler;
+        _options.ContinueOnError = continueOnError;
+        return this;
+    }
+
     public PdfDocument GeneratePdf(string markdown)
     {
         return PdfGenerator.GeneratePdf(markdown, _options);

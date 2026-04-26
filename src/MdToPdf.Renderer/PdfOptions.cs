@@ -34,6 +34,9 @@ public class PdfOptions
     public PdfSecurityOptions? Security { get; set; }
     public bool AutoBookmarks { get; set; } = false;
     public bool CompressOutput { get; set; } = false;
+    public Action<int>? OnProgress { get; set; }
+    public Action<Exception>? OnRenderError { get; set; }
+    public bool ContinueOnError { get; set; } = false;
 
     public void SetMargins(double all)
     {

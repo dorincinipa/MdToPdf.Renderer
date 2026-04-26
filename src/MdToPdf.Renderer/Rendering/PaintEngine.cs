@@ -24,36 +24,53 @@ internal sealed class PaintEngine
             .GroupBy(b => b.PageIndex)
             .ToDictionary(g => g.Key, g => g.ToList());
 
+        _options.OnProgress?.Invoke(0);
+
         for (int i = 0; i < pages; i++)
         {
             var page = document.AddPage();
             page.Width = XUnit.FromPoint(layout.PageWidth);
             page.Height = XUnit.FromPoint(layout.PageHeight);
-            using var g = XGraphics.FromPdfPage(page);
 
-            if (!blocksByPage.TryGetValue(i, out var list)) continue;
-
-            // Draw backgrounds and bars first so text is on top
-            foreach (var block in list.OfType<LayoutCodeBackground>())
-                DrawCodeBackground(g, block);
-            foreach (var bar in list.OfType<LayoutBlockquoteBar>())
-                DrawBlockquoteBar(g, bar);
-
-            foreach (var block in list)
+            try
             {
-                switch (block)
+                using var g = XGraphics.FromPdfPage(page);
+
+                if (!blocksByPage.TryGetValue(i, out var list))
                 {
-                    case LayoutLine line:
-                        _inlineRenderer.DrawLine(g, line);
-                        break;
-                    case LayoutRule rule:
-                        DrawRule(g, rule);
-                        break;
-                    case LayoutImageBlock img:
-                        DrawImage(g, img);
-                        break;
+                    _options.OnProgress?.Invoke((i + 1) * 100 / pages);
+                    continue;
+                }
+
+                // Draw backgrounds and bars first so text is on top
+                foreach (var block in list.OfType<LayoutCodeBackground>())
+                    DrawCodeBackground(g, block);
+                foreach (var bar in list.OfType<LayoutBlockquoteBar>())
+                    DrawBlockquoteBar(g, bar);
+
+                foreach (var block in list)
+                {
+                    switch (block)
+                    {
+                        case LayoutLine line:
+                            _inlineRenderer.DrawLine(g, line);
+                            break;
+                        case LayoutRule rule:
+                            DrawRule(g, rule);
+                            break;
+                        case LayoutImageBlock img:
+                            DrawImage(g, img);
+                            break;
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                _options.OnRenderError?.Invoke(ex);
+                if (!_options.ContinueOnError) throw;
+            }
+
+            _options.OnProgress?.Invoke((i + 1) * 100 / pages);
         }
     }
 
