@@ -73,6 +73,7 @@ public partial class MainWindow : Window
             config.SetMargins(margin);
 
         config.AutoBookmarks = AutoBookmarksCheck.IsChecked == true;
+        config.CompressOutput = CompressCheck.IsChecked == true;
 
         // do not use hardocoded passwords
         config.Security = new PdfSecurityOptions {

@@ -31,6 +31,9 @@
 
             <CheckBox x:Name="AutoBookmarksCheck" Content="Bookmarks" IsChecked="True"
                       VerticalAlignment="Center" Margin="16,0,0,0"/>
+
+            <CheckBox x:Name="CompressCheck" Content="Compress" IsChecked="False"
+                      VerticalAlignment="Center" Margin="16,0,0,0"/>
         </StackPanel>
 
         <TextBox Grid.Row="1" x:Name="MarkdownEditor"
