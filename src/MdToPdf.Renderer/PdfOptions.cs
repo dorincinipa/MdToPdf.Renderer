@@ -32,6 +32,7 @@ public class PdfOptions
     public double LineHeight { get; set; } = 1.4;
     public ImageLoadFailureMode ImageLoadFailureMode { get; set; } = ImageLoadFailureMode.RenderAltText;
     public PdfSecurityOptions? Security { get; set; }
+    public bool AutoBookmarks { get; set; } = false;
 
     public void SetMargins(double all)
     {

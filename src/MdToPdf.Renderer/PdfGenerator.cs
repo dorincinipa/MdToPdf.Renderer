@@ -5,6 +5,7 @@ using MdToPdf.Renderer.Rendering;
 using PdfSharp.Drawing;
 using PdfSharp.Pdf;
 using PdfSharp.Pdf.Security;
+using PdfSharp.Pdf.Annotations;
 
 namespace MdToPdf.Renderer;
 
@@ -63,6 +64,30 @@ public static class PdfGenerator
         ProbeImages(ast, imageLoader);
         var paint = new PaintEngine(options, imageLoader);
         paint.Paint(document, layout);
+
+        if (options.AutoBookmarks)
+            ApplyBookmarks(document, layout);
+    }
+
+    private static void ApplyBookmarks(PdfDocument document, LayoutResult layout)
+    {
+        var stack = new Stack<PdfOutline>();
+        foreach (var block in layout.Blocks)
+        {
+            if (block is not LayoutHeadingMarker marker) continue;
+
+            while (stack.Count >= marker.Level)
+                stack.Pop();
+
+            var outline = new PdfOutline(marker.Title, document.Pages[marker.PageIndex], false)
+            {
+                Top = layout.PageHeight - marker.Y
+            };
+
+            var parent = stack.Count > 0 ? stack.Peek().Outlines : document.Outlines;
+            parent.Add(outline);
+            stack.Push(outline);
+        }
     }
 
     private static void ApplySecurity(PdfDocument document, PdfSecurityOptions? security)

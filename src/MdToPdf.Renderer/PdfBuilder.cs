@@ -67,6 +67,12 @@ public sealed class PdfBuilder
         return this;
     }
 
+    public PdfBuilder WithBookmarks(bool enabled = true)
+    {
+        _options.AutoBookmarks = enabled;
+        return this;
+    }
+
     public PdfDocument GeneratePdf(string markdown)
     {
         return PdfGenerator.GeneratePdf(markdown, _options);

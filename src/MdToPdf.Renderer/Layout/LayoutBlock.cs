@@ -28,6 +28,12 @@ internal sealed class LayoutBlockquoteBar : LayoutBlock { }
 
 internal sealed class LayoutCodeBackground : LayoutBlock { }
 
+internal sealed class LayoutHeadingMarker : LayoutBlock
+{
+    public int Level { get; set; }
+    public string Title { get; set; } = string.Empty;
+}
+
 internal sealed class StyledRun
 {
     public string Text { get; set; } = string.Empty;

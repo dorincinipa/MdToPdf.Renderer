@@ -1,4 +1,3 @@
-using System.Text;
 using MdToPdf.Renderer.Parsing.Ast;
 using PdfSharp.Drawing;
 
@@ -114,6 +113,17 @@ internal sealed class LayoutEngine
         bool hasFollowing = index < siblings.Count - 1;
         double needed = lineHeight + (hasFollowing ? BodyLineHeight() : 0);
         EnsureSpace(needed);
+
+        _result.Blocks.Add(new LayoutHeadingMarker
+        {
+            Level = h.Level,
+            Title = ExtractPlainText(h.Inlines),
+            PageIndex = _currentPage,
+            X = x,
+            Y = _y,
+            Width = width,
+            Height = 0
+        });
 
         var style = new InlineStyle
         {
@@ -547,6 +557,26 @@ internal sealed class LayoutEngine
             line.Width = offset;
             _result.Blocks.Add(line);
             _y += lineHeight;
+        }
+    }
+
+    private static string ExtractPlainText(List<InlineSpan> inlines)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var span in inlines)
+            AppendText(span, sb);
+        return sb.ToString().Trim();
+    }
+
+    private static void AppendText(InlineSpan span, System.Text.StringBuilder sb)
+    {
+        switch (span)
+        {
+            case TextSpan t: sb.Append(t.Text); break;
+            case BoldSpan b: foreach (var c in b.Children) AppendText(c, sb); break;
+            case ItalicSpan i: foreach (var c in i.Children) AppendText(c, sb); break;
+            case CodeSpan cs: sb.Append(cs.Text); break;
+            case LinkSpan l: foreach (var c in l.Children) AppendText(c, sb); break;
         }
     }
 
