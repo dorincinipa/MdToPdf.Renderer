@@ -73,6 +73,12 @@ public sealed class PdfBuilder
         return this;
     }
 
+    public PdfBuilder WithCompression(bool enabled = true)
+    {
+        _options.CompressOutput = enabled;
+        return this;
+    }
+
     public PdfDocument GeneratePdf(string markdown)
     {
         return PdfGenerator.GeneratePdf(markdown, _options);

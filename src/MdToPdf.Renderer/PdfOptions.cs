@@ -33,6 +33,7 @@ public class PdfOptions
     public ImageLoadFailureMode ImageLoadFailureMode { get; set; } = ImageLoadFailureMode.RenderAltText;
     public PdfSecurityOptions? Security { get; set; }
     public bool AutoBookmarks { get; set; } = false;
+    public bool CompressOutput { get; set; } = false;
 
     public void SetMargins(double all)
     {

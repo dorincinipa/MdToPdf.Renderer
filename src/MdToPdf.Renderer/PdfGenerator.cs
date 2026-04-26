@@ -34,6 +34,11 @@ public static class PdfGenerator
         ArgumentNullException.ThrowIfNull(options);
         var document = new PdfDocument();
         ApplySecurity(document, options.Security);
+        if (options.CompressOutput)
+        {
+            document.Options.CompressContentStreams = true;
+            document.Options.FlateEncodeMode = PdfFlateEncodeMode.BestCompression;
+        }
         AddPdfPages(document, markdown, options);
         return document;
     }
