@@ -9,6 +9,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
@@ -50,7 +51,11 @@
                     Click="LoadSampleBtn_Click"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="3" x:Name="StatusText" Margin="0,6,0,0"
+        <ProgressBar Grid.Row="3" x:Name="RenderProgress"
+                     Height="6" Minimum="0" Maximum="100" Value="0"
+                     Margin="0,8,0,0" Visibility="Collapsed"/>
+
+        <TextBlock Grid.Row="4" x:Name="StatusText" Margin="0,4,0,0"
                    Foreground="Gray" TextWrapping="Wrap"/>
     </Grid>
 </Window>
