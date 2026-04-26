@@ -1,6 +1,5 @@
 using MdToPdf.Renderer.Layout;
 using PdfSharp.Drawing;
-using PdfSharp.Pdf;
 
 namespace MdToPdf.Renderer.Rendering;
 
@@ -14,7 +13,7 @@ internal sealed class InlineRenderer
         _options = options;
     }
 
-    internal void DrawLine(XGraphics g, PdfPage page, LayoutLine line)
+    internal void DrawLine(XGraphics g, LayoutLine line)
     {
         double baseline = line.Y + line.Baseline;
 
@@ -30,19 +29,6 @@ internal sealed class InlineRenderer
             double y = line.Y;
 
             g.DrawString(run.Text, font, brush, new XPoint(x, baseline));
-
-            if (!string.IsNullOrEmpty(run.LinkUrl))
-            {
-                try
-                {
-                    var rect = new XRect(x, y, run.Width, line.Height);
-                    page.AddWebLink(new PdfRectangle(rect), run.LinkUrl);
-                }
-                catch
-                {
-                    // annotation failure is non-fatal
-                }
-            }
         }
     }
 

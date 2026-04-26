@@ -65,29 +65,80 @@ public static class PdfGenerator
         var paint = new PaintEngine(options, imageLoader);
         paint.Paint(document, layout);
 
-        if (options.AutoBookmarks)
-            ApplyBookmarks(document, layout);
+        ApplyAnnotations(document, layout, options.AutoBookmarks);
     }
 
-    private static void ApplyBookmarks(PdfDocument document, LayoutResult layout)
+    private static void ApplyAnnotations(PdfDocument document, LayoutResult layout, bool autoBookmarks)
     {
-        var stack = new Stack<PdfOutline>();
+        // Pre-pass: collect all heading markers so forward anchor references resolve correctly.
+        var headingAnchors = new Dictionary<string, (int pageIndex, double y)>(StringComparer.OrdinalIgnoreCase);
         foreach (var block in layout.Blocks)
         {
-            if (block is not LayoutHeadingMarker marker) continue;
-
-            while (stack.Count >= marker.Level)
-                stack.Pop();
-
-            var outline = new PdfOutline(marker.Title, document.Pages[marker.PageIndex], false)
-            {
-                Top = layout.PageHeight - marker.Y
-            };
-
-            var parent = stack.Count > 0 ? stack.Peek().Outlines : document.Outlines;
-            parent.Add(outline);
-            stack.Push(outline);
+            if (block is LayoutHeadingMarker m)
+                headingAnchors.TryAdd(SlugifyHeading(m.Title), (m.PageIndex, m.Y));
         }
+
+        // Main pass: apply bookmarks and link annotations together.
+        var bookmarkStack = autoBookmarks ? new Stack<PdfOutline>() : null;
+        foreach (var block in layout.Blocks)
+        {
+            switch (block)
+            {
+                case LayoutHeadingMarker marker when bookmarkStack is not null:
+                    while (bookmarkStack.Count >= marker.Level)
+                        bookmarkStack.Pop();
+
+                    var outline = new PdfOutline(marker.Title, document.Pages[marker.PageIndex], false)
+                    {
+                        Top = layout.PageHeight - marker.Y
+                    };
+                    var parent = bookmarkStack.Count > 0 ? bookmarkStack.Peek().Outlines : document.Outlines;
+                    parent.Add(outline);
+                    bookmarkStack.Push(outline);
+                    break;
+
+                case LayoutLine line:
+                    foreach (var run in line.Runs)
+                    {
+                        if (string.IsNullOrEmpty(run.LinkUrl)) continue;
+                        if (run.LinkUrl.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        var pdfRect = new PdfRectangle(
+                            new XPoint(line.X + run.OffsetX, layout.PageHeight - line.Y - line.Height),
+                            new XPoint(line.X + run.OffsetX + run.Width, layout.PageHeight - line.Y));
+
+                        var page = document.Pages[line.PageIndex];
+
+                        if (run.LinkUrl.StartsWith('#') && run.LinkUrl.Length > 1)
+                        {
+                            var slug = run.LinkUrl.Substring(1);
+                            if (headingAnchors.TryGetValue(slug, out var target))
+                            {
+                                var annotation = PdfLinkAnnotation.CreateDocumentLink(
+                                    pdfRect, target.pageIndex + 1,
+                                    new XPoint(0, layout.PageHeight - target.y));
+                                page.Annotations.Add(annotation);
+                            }
+                        }
+                        else
+                        {
+                            page.AddWebLink(pdfRect, run.LinkUrl);
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    private static string SlugifyHeading(string title)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (char c in title.ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(c)) sb.Append(c);
+            else if (c == ' ') sb.Append('-');
+        }
+        return sb.ToString();
     }
 
     private static void ApplySecurity(PdfDocument document, PdfSecurityOptions? security)

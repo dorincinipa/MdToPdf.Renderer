@@ -44,7 +44,7 @@ internal sealed class PaintEngine
                 switch (block)
                 {
                     case LayoutLine line:
-                        _inlineRenderer.DrawLine(g, page, line);
+                        _inlineRenderer.DrawLine(g, line);
                         break;
                     case LayoutRule rule:
                         DrawRule(g, rule);
