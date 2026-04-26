@@ -28,6 +28,9 @@
 
             <TextBlock Text="Margins (pt):" VerticalAlignment="Center" Margin="16,0,6,0"/>
             <TextBox x:Name="MarginBox" Width="50" Text="40" VerticalAlignment="Center"/>
+
+            <CheckBox x:Name="AutoBookmarksCheck" Content="Bookmarks" IsChecked="True"
+                      VerticalAlignment="Center" Margin="16,0,0,0"/>
         </StackPanel>
 
         <TextBox Grid.Row="1" x:Name="MarkdownEditor"

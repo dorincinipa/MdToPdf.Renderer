@@ -72,6 +72,8 @@ public partial class MainWindow : Window
         if (double.TryParse(MarginBox.Text, out var margin))
             config.SetMargins(margin);
 
+        config.AutoBookmarks = AutoBookmarksCheck.IsChecked == true;
+
         // do not use hardocoded passwords
         config.Security = new PdfSecurityOptions {
             UserPassword = "user",
